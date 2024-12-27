@@ -1,0 +1,177 @@
+import xlwings as xw
+import math
+import time
+import numpy as np
+
+# RUTA DEL LIBRO EXCEL Y LOS INDICES DE LAS HOJAS A PROCESAR
+libro_path = r"D:\MARIA ISABEL LOPEZ HUARCAYA\00_SCTR\Calculadora Reserva\Plantilla Calculo de Reserva SCTR - Python - Pendientes Tasa Fija  y VAC con TIR - SOBREVIVENCI_PLANTILLA_LIMPIA.xlsx"
+analisis_sheet_index = 4
+cru_sheet_index = 3
+curva_descuento_sheet_index = 2
+tir_sheet_index = 5
+CURVAS_VTD_sheet_index = 6
+n = 9
+# actualizar
+
+tipsin_range = f"N4:N{n}"
+codparen_range = f"M4:M{n}"
+fallecimiento_range = f"I4:I{n}"
+siniestro_range = f"C4:C{n}"
+fechacorte_range = f"D4:D{n}"
+fechanacimiento_range = f"E4:E{n}"
+sexo_range = f"F4:F{n}"
+fechadenun_range = f"J4:J{n}"
+tceanual_range = f"H4:H{n}"
+tceactualizasbs_range = f"L4:L{n}"
+tir_VTD_output_range = f"K4:K{n}"
+condsalu_range = f"G4:G{n}"
+fechasiniestro_range = f"S4:S{n}"
+ppenbas_range = f"Q4:Q{n}"
+rempro_range = f"O4:O{n}"
+inflacion_range = f"P4:P{n}"
+reserva_range_output = f"T4:T{n}"
+cobertura_range_output = f"R4:R{n}"
+condicion_salud = f"R4:R{n}"
+celda_reserva_titular = "E24"
+celda_reserva_beneficiario = "J24"
+celda_reserva_sobrevivencia = "Q24"
+celda_TIR_VTD = "I12"
+ 
+# Iniciar temporizador
+start_time = time.time()
+libro = xw.Book(libro_path)
+ 
+# SOLO VAMOS ANALIZAR LA HOJA CRU Y LA HOJA ANALISIS
+cru = libro.sheets[cru_sheet_index]
+tir = libro.sheets[tir_sheet_index]
+data = libro.sheets[analisis_sheet_index]
+curva_descuento = libro.sheets[curva_descuento_sheet_index]
+curva_vtd = libro.sheets[CURVAS_VTD_sheet_index]
+
+TIPSIN = data.range(tipsin_range).value
+CODPAREN = data.range(codparen_range).value
+FALLECIMIENTO = data.range(fallecimiento_range).value
+SINIESTRO = data.range(siniestro_range).value
+FECHA_CORTE = data.range(fechacorte_range).value
+FECHA_DENUN = data.range(fechadenun_range).value
+FECHA_NACIM = data.range(fechanacimiento_range).value
+SEXO = data.range(sexo_range).value
+SALUD = data.range(condsalu_range).value
+TCE = data.range(tceanual_range).value
+REMPRO = data.range(rempro_range).value
+INFLA = data.range(inflacion_range).value
+PPENBAS = data.range(ppenbas_range).value
+FECHA_SINIESTRO = data.range(fechasiniestro_range).value
+COBERTURA_SINIESTRO = data.range(cobertura_range_output).value
+reservas = [None] * (n - 3)  #Actualizar el número de datos dinámicamente
+TIR_VTD = [None] * (n - 3) 
+
+
+siniestro_acumulado = {}
+# Procesar cada ID
+# TIR
+'''for i in range(0, n - 3):
+   # print(f"#{i}: SINIESTRO: {str(int(SINIESTRO[i]))} - TIPSIN: {TIPSIN[i]} - CODPAREN: {CODPAREN[i]}")
+    if(TIPSIN[i] == "01"):
+        tir.range("C2").value = str(int(SINIESTRO[i]))
+        tir.range("C3").value = FECHA_CORTE[i]
+        curva_vtd.range("B1").value = FECHA_DENUN[i]
+        tir.range("C4").value = FECHA_NACIM[i]
+        tir.range("I5").value = SEXO[i] #"'" + str(SEXO[i])
+        tir.range("I6").value = SALUD[i] # "'" + str(SALUD[i])
+        tir.range("I9").value =  "'" + str(CODPAREN[i])
+        tir.range("C5").value = FECHA_SINIESTRO[i]
+        tir.range("I8").value = float(PPENBAS[i]/100) if float(PPENBAS[i]) > 1 else float(PPENBAS[i])
+        tir.range("I3").value = REMPRO[i]
+        tir.range("I4").value = INFLA[i]
+
+        flujo_tir_be_sob = np.array(tir.range("K19:K1350").value, dtype=np.float64)
+        siniestro_id = int(SINIESTRO[i])
+        if siniestro_id not in siniestro_acumulado:
+            siniestro_acumulado[siniestro_id] = np.zeros_like(flujo_tir_be_sob)
+        siniestro_acumulado[siniestro_id] += flujo_tir_be_sob
+        
+        
+        TIR_VTD[i] = [tir.range(celda_TIR_VTD).value]
+        print(f"TIR_VTD: {TIR_VTD[i]}\n")
+        continue
+        
+data.range(tir_VTD_output_range).value = TIR_VTD'''
+
+#RESERVA
+# Procesar cada ID
+for i in range(0, n - 3):
+    print(f"#{i}: SINIESTRO: {str(int(SINIESTRO[i]))} - TIPSIN: {TIPSIN[i]} - CODPAREN: {CODPAREN[i]}")
+    
+    if(TIPSIN[i] == "01"):
+        cru.range("O4").value = str(int(SINIESTRO[i]))
+        cru.range("O9").value = TCE[i]
+        curva_descuento.range("C3").value = cru.range("O10").value
+        curva_vtd.range("B1").value = FECHA_DENUN[i]
+        cru.range("O5").value = FECHA_CORTE[i]
+        cru.range("O6").value = FECHA_NACIM[i]
+        cru.range("O7").value = SEXO[i] #"'" + str(SEXO[i])
+        cru.range("O9").value = TCE[i]
+        cru.range("O11").value = FALLECIMIENTO[i]
+        cru.range("O12").value = SALUD[i] # "'" + str(SALUD[i])
+        cru.range("O13").value =  "'" + str(CODPAREN[i])
+        cru.range("O14").value = FECHA_SINIESTRO[i]
+        cru.range("O16").value = float(PPENBAS[i]/100) if float(PPENBAS[i]) > 1 else float(PPENBAS[i])
+        cru.range("O17").value = REMPRO[i]
+        cru.range("O18").value = INFLA[i]
+        
+        reservas[i] = [cru.range(celda_reserva_sobrevivencia).value]
+        print(f"Reserva: {reservas[i]}\n")
+        continue
+    
+    if(TIPSIN[i] == "02" and  CODPAREN[i] == '00' ):
+        curva_vtd.range("B1").value = FECHA_DENUN[i]
+        cru.range("C4").value = str(SINIESTRO[i])
+        cru.range("C5").value = FECHA_CORTE[i]
+        cru.range("C6").value = FECHA_NACIM[i]
+        cru.range("C7").value = SEXO[i]
+        cru.range("C9").value = TCE[i]
+        curva_descuento.range("C3").value = cru.range("C10").value
+        cru.range("C11").value = FALLECIMIENTO[i]
+        cru.range("C12").value = SALUD[i]
+        cru.range("C13").value = COBERTURA_SINIESTRO[i]
+        cru.range("C14").value =  "'" + str(CODPAREN[i])
+        #cru.range("O14").value = FECHA_SINIESTRO[i]
+        cru.range("C16").value = float(PPENBAS[i]/100) if float(PPENBAS[i]) > 1 else float(PPENBAS[i])
+        cru.range("C17").value = REMPRO[i]
+        cru.range("C18").value = INFLA[i]
+        time.sleep(1)
+        
+        reservas[i] = [cru.range(celda_reserva_titular).value]
+        print(f"Reserva: {reservas[i]}\n")
+        continue
+    
+    if(TIPSIN[i] == "02" and  CODPAREN[i] != '00' ):
+        curva_vtd.range("B1").value = FECHA_DENUN[i]
+        cru.range("H4").value = str(int(SINIESTRO[i]))
+        cru.range("H5").value = FECHA_CORTE[i]
+        cru.range("H6").value = FECHA_NACIM[i]
+        cru.range("H7").value = SEXO[i]
+        cru.range("H9").value = TCE[i]
+        curva_descuento.range("C3").value = cru.range("H10").value
+        cru.range("H11").value = FALLECIMIENTO[i]
+        cru.range("H12").value = SALUD[i]
+        cru.range("H13").value =  "'" + str(CODPAREN[i])
+        cru.range("H14").value = FECHA_SINIESTRO[i]
+        cru.range("H16").value = float(PPENBAS[i]/100) if float(PPENBAS[i]) > 1 else float(PPENBAS[i])
+        cru.range("H17").value = REMPRO[i]
+        cru.range("H18").value = INFLA[i]
+        time.sleep(1)
+        
+        reservas[i] = [cru.range(celda_reserva_beneficiario).value]
+        print(f"Reserva: {reservas[i]}\n")
+        continue
+data.range(reserva_range_output).value = reservas
+ 
+
+libro.save()
+libro.close()
+end_time = time.time()
+total_time = end_time - start_time
+print(f"Proceso terminado en {total_time:.2f} segundos")
+    
